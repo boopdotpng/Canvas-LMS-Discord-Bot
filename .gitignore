@@ -1,0 +1,4 @@
+bot-env/
+.env
+discord.log
+db.json
