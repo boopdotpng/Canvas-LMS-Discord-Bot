@@ -1,7 +1,6 @@
 import requests
 from datetime import datetime, timedelta
-import grequests
-
+import aiohttp
 current_term = "Fall 2022"
 
 
@@ -64,7 +63,7 @@ async def getCourses(token):
 
 # fetch assignments for provided courses
 
-async def get_week_assignments(coursedict, token, time):
+def get_week_assignments(token,courses=None):
     header = {'Authorization': 'Bearer ' + token}
     data = {
         "per_page": 15,
@@ -72,10 +71,13 @@ async def get_week_assignments(coursedict, token, time):
         "order_by": "due_at"
     }
     assignments = []
-    time_now = datetime.now()
-    time_week = time_now + timedelta(days=7)
-    r = requests.get(f"https://canvas.instructure.com/api/v1/users/self/todo",
-                     headers=header, data=data).json()
+    next_sunday = datetime.now() + timedelta(days=6 - datetime.now().weekday())
+    next_sunday.replace(hour=23, minute=59, second=59, microsecond=0)
+
+    urls = [f"https://canvas.instructure.com/api/v1/courses/{course['id']}/assignments" for course in courses.values()]
+
+
+
 
 
 # get current grades of student
@@ -99,3 +101,36 @@ async def get_grades(courses, token):
                     "grade": enrollment["grades"]['current_score']
                 })
     return grades
+
+
+token = "7301~WmWK83vBnf9rrxz8A9bK6DvYDmcCRIxH5zen4ApU3EarSANoupCy1Mz88Q0AzuLv"
+courses = {
+                "Analytical Foundations of ECE": {
+                    "id": 73010000000178577,
+                    "notifications": False
+                },
+                "Computer Organization": {
+                    "id": 73010000000174979,
+                    "notifications": True
+                },
+                "Data Structures and Algorithms C++": {
+                    "id": 73010000000181288,
+                    "notifications": False
+                },
+                "lbst": {
+                    "id": 73010000000181245,
+                    "notifications": True
+                },
+                "Logic and Networks Lab": {
+                    "id": 73010000000185654,
+                    "notifications": False
+                },
+                "Network Theory II": {
+                    "id": 73010000000177080,
+                    "notifications": False
+                }
+            }
+
+hi = get_week_assignments(token=token, courses=courses)
+
+print(hi)

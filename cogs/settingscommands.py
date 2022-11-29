@@ -22,7 +22,7 @@ class updateSettingsView(discord.ui.View):
             courses[course]["notifications"] = True
 
         db.update_courses(interaction.user.id, courses)
-        
+
         return await interaction.response.send_message("Selected " + ', '.join(selected) + ".", ephemeral=True)
 
     @discord.ui.select(  # the decorator that lets you specify the properties of the select menu
@@ -167,11 +167,11 @@ class setup_commands(commands.Cog):
     ######################################################################
 
     @commands.slash_command(
-        name="update_settings",
-        description="adjust bot settings",
+        name="notification_settings",
+        description="adjust bot notification settings",
         guild_ids=[1038598934265864222]
     )
-    async def update_settings(self, ctx):
+    async def update_notifications(self, ctx):
         if not db.is_user(ctx.author.id):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
@@ -190,6 +190,7 @@ class setup_commands(commands.Cog):
         view.children[3].callback = view.course_select_callback
 
         await ctx.respond("Adjust notification preferences below.\n", view=view, ephemeral=True)
+
 
     @commands.slash_command(
         name="delete_account",
