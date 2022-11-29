@@ -20,10 +20,21 @@ class canvas_commands(commands.Cog):
 
         # get courses
         courses = db.get_courses(userid)
+
         # get assignments
-        assignments = await canvas_api.getAssignments(userid, courses)
-        # send message
-        await ctx.respond(assignments, ephemeral=True)
+        assignments = await canvas_api.get_week_assignments(db.get_token(userid), courses)
+
+        # make embed for assignments
+        embed = discord.Embed(
+            title="Assignments",
+            description="Here are your assignments for the week:",
+            color=discord.Colour.brand_red()
+            )
+
+        print(assignments)
+
+
+
 
     @commands.slash_command(
         name="get_grades",
