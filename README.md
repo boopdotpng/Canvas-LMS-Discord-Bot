@@ -20,8 +20,8 @@ will start the bot on your server.
 
 ## Roadmap
 
-- [] Show assignments command / embed visual
-- [] Direct message reminders for users on the days that they specify
-- [] Custom reminder times
-- [] Relate server channels to courses and post new assignments in the channel
-- [] Special admin settings for owner of server/bot
+- [ ] Show assignments command / embed visual
+- [ ] Direct message reminders for users on the days that they specify
+- [ ] Custom reminder times
+- [ ] Relate server channels to courses and post new assignments in the channel
+- [ ] Special admin settings for owner of server/bot
