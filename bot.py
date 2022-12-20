@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import os
 import discord
 import logging
+from discord.ext import commands
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -11,14 +12,18 @@ logger.addHandler(handler)
 
 load_dotenv()
 
-token = str(os.getenv("TOKEN"))
+if os.getenv('TESTING'):
+	token = str(os.getenv("TOKEN_TEST"))
+else:
+	token = str(os.getenv("TOKEN"))
 
-bot = discord.Bot(intents=discord.Intents.default())
+bot = commands.Bot(command_prefix = "@", intents=discord.Intents.default())
 
 @bot.event
 async def on_ready():
-	logger.info("Bot is ready")
-	print("bot is ready")
+	logger.info("Startup Sequence Completed")
+	test_channel =  await bot.get_channel(860332677852037153)
+	await test_channel.send("Startup Sequence Completed")
 
 for f in os.listdir("./cogs"):
 	if f.endswith(".py"):
