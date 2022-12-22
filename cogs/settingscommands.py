@@ -8,20 +8,20 @@ class updateSettingsView(discord.ui.View):
     @discord.ui.button(label="On", style=discord.ButtonStyle.primary, emoji="🔔")
     async def first_button_callback(self, button, interaction):
         await interaction.response.send_message("Notifications On.", ephemeral=True)
-        db.update_notifications(interaction.user.id, True)
+        db.updateNotify(interaction.user.id, True)
 
     @discord.ui.button(label="Off", style=discord.ButtonStyle.secondary, emoji="🔕")
     async def second_button_callback(self, button, interaction):
         await interaction.response.send_message("Notifications Off.", ephemeral=True)
-        db.update_notifications(interaction.user.id, False)
+        db.updateNotify(interaction.user.id, False)
 
     async def course_select_callback(self, interaction):
         selected = interaction.data["values"]
-        courses = db.get_courses(interaction.user.id)
+        courses = db.getCourses(interaction.user.id)
         for course in selected:
             courses[course]["notifications"] = True
 
-        db.update_courses(interaction.user.id, courses)
+        db.updateCourseSettings(interaction.user.id, courses)
 
         return await interaction.response.send_message("Selected " + ', '.join(selected) + ".", ephemeral=True)
 
@@ -85,7 +85,7 @@ class updateSettingsView(discord.ui.View):
                 days = "0111110"
         await interaction.response.send_message("Days selected: " + ", ".join(select.values) + ".", ephemeral=True)
         # convert days to binary
-        db.update_days(interaction.user.id, int(days, 2))
+        db.updateNotifyDays(interaction.user.id, int(days, 2))
 
 
 class tokenModal(discord.ui.Modal):
@@ -101,27 +101,9 @@ class tokenModal(discord.ui.Modal):
         if isValid[0]:
             first_name = isValid[1].split(" ")[0]
             await interaction.response.send_message(f"Welcome, {first_name}!", ephemeral=True)
-            await db.new_user(interaction.user.id, token)
+            await db.newUser(interaction.user.id, token)
         else:
             await interaction.response.send_message("Invalid token", ephemeral=True)
-
-
-class updateTokenModal(discord.ui.Modal):
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.add_item(discord.ui.InputText(label="Enter new token here",
-                      style=discord.InputTextStyle.long, max_length=72, min_length=1, placeholder="Token"))
-
-    async def callback(self, interaction: discord.Interaction):
-        token = self.children[0].value
-        isValid = canvas_api.verifyToken(token)
-        if isValid[0]:
-            await interaction.response.send_message("Token updated!", ephemeral=True)
-            db.update_token(interaction.user.id, token)
-        else:
-            await interaction.response.send_message("Invalid token", ephemeral=True)
-
 
 # Create a class called MyView that subclasses discord.ui.View
 class initialTokenView(discord.ui.View):
@@ -130,19 +112,11 @@ class initialTokenView(discord.ui.View):
     async def button_callback(self, button, interaction):
         await interaction.response.send_modal(tokenModal(title="Token Input"))
 
-
-class updateTokenButton(discord.ui.View):
-
-    @discord.ui.button(label="Update Token", style=discord.ButtonStyle.primary, emoji="📝")
-    async def button_callback(self, button, interaction):
-        await interaction.response.send_modal(updateTokenModal(title="Token Input"))
-
-
 class deleteButtonView(discord.ui.View):
     @discord.ui.button(label="Delete", style=discord.ButtonStyle.danger, emoji="🗑️")
     async def button_callback(self, button, interaction):
         await interaction.response.send_message("Account deleted.", ephemeral=True)
-        db.delete_user(interaction.user.id)
+        db.deleteAccount(interaction.user.id)
 
 #####! the commands start here !#####
 
@@ -152,31 +126,27 @@ class setup_commands(commands.Cog):
         self.bot = bot_
 
     @commands.slash_command(  # initial bot setup
-        name="update_token",
-        description="update your canvas token",
+        name="set_token",
+        description="set/update your canvas token",
         guild_ids=[1038598934265864222]
     )
     async def initial_setup(self, ctx):
         userid = ctx.author.id.__int__()
-        if db.is_user(userid):
-            return await ctx.respond("Please enter your new token", view=updateTokenButton(), ephemeral=True)
-
-        # send button
-        return await ctx.respond("Please enter your token", view=initialTokenView(), ephemeral=True)
+        ctx.respond("Please enter your token below.", view=initialTokenView())
 
     ######################################################################
 
     @commands.slash_command(
-        name="notification_settings",
-        description="adjust bot notification settings",
+        name="notify_settings",
+        description="adjust notification settings",
         guild_ids=[1038598934265864222]
     )
     async def update_notifications(self, ctx):
         if not db.is_user(ctx.author.id):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
-        token = db.get_token(ctx.author.id)
-        courses = db.get_courses(ctx.author.id)
+        token = db.getToken(ctx.author.id)
+        courses = db.getCourses(ctx.author.id)
         view = updateSettingsView()
         view.add_item(discord.ui.Select(
             placeholder="Select courses",
@@ -198,7 +168,7 @@ class setup_commands(commands.Cog):
         guild_ids=[1038598934265864222]
     )
     async def delete_account(self, ctx):
-        if not db.is_user(ctx.author.id):
+        if not db.isUser(ctx.author.id):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
         await ctx.respond("Sorry to see you go! Press the button to confirm.", view=deleteButtonView(), ephemeral=True)

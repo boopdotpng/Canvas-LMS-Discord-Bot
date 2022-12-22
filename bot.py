@@ -12,18 +12,14 @@ logger.addHandler(handler)
 
 load_dotenv()
 
-if os.getenv('TESTING'):
-	token = str(os.getenv("TOKEN_TEST"))
-else:
-	token = str(os.getenv("TOKEN"))
+token = os.getenv("TOKEN")
 
-bot = commands.Bot(command_prefix = "@", intents=discord.Intents.default())
+bot = discord.Bot(intents=discord.Intents.default())
 
 @bot.event
 async def on_ready():
 	logger.info("Startup Sequence Completed")
-	test_channel =  await bot.get_channel(860332677852037153)
-	await test_channel.send("Startup Sequence Completed")
+	print("startup complete")
 
 for f in os.listdir("./cogs"):
 	if f.endswith(".py"):

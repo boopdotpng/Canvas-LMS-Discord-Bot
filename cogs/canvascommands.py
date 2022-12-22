@@ -15,14 +15,14 @@ class canvas_commands(commands.Cog):
     )
     async def show_week(self, ctx):
         userid = ctx.author.id.__int__()
-        if not db.is_user(userid):
+        if not db.isUser(userid):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
         # get courses
-        courses = db.get_courses(userid)
+        courses = db.getCourses(userid)
 
         # get assignments
-        assignments = await canvas_api.get_week_assignments(db.get_token(userid), courses)
+        assignments = await canvas_api.getWeekAssignments(db.get_token(userid), courses)
 
         # make embed for assignments
         embed = discord.Embed(
@@ -43,14 +43,14 @@ class canvas_commands(commands.Cog):
     )
     async def get_grades(self, ctx):
         userid = ctx.author.id.__int__()
-        if not db.is_user(userid):
+        if not db.isUser(userid):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
         # get courses
-        token = db.get_token(userid)
-        courses = db.get_courses(userid)
+        token = db.getToken(userid)
+        courses = db.getCourses(userid)
         # get grades
-        grades = await canvas_api.get_grades(courses, token)
+        grades = await canvas_api.getGrades(courses, token)
 
         embed = discord.Embed(
             title="Grades",
