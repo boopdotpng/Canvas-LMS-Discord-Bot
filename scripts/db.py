@@ -3,6 +3,7 @@ import os
 #import scripts.canvas_api as canvas_api
 import canvas_api
 from pymongo import MongoClient
+from pymongo.database import Database 
 from datetime import datetime, date, time, timedelta
 
 
@@ -12,8 +13,8 @@ conn = os.getenv("CONN")
 
 client = MongoClient(conn)
 
-maindb = client["canvas-users"]
-user_collection = maindb["users"]
+maindb = client["Canvas"]
+user_collection = maindb["Users"]
 
 def isUser(userID):
     user = user_collection.find_one({"_id": userID})
@@ -54,5 +55,5 @@ def deleteAccount(userID):
 def getToken(userID):
     user = user_collection.find_one({"_id": userID})
     return user["token"]
-def getDB():
-    return maindb
+def getClient() -> MongoClient:
+    return client
