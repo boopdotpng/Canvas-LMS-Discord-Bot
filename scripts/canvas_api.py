@@ -4,10 +4,10 @@ import aiohttp
 import asyncio
 import time
 
-current_term = "Fall 2022"
+current_term = "Spring 2023"
 
 
-def get_user_id(token):
+def getUserID(token):
     header = {'Authorization': 'Bearer ' + token}
     r = requests.get(
         "https://canvas.instructure.com/api/v1/users/self", headers=header)
@@ -65,7 +65,7 @@ async def getCourses(token):
 
 
 # fetch assignments for provided courses
-async def get_assignment(session, url, token):
+async def getAssignment(session, url, token):
     plus_week = (datetime.now() + timedelta(days=7)).replace(hour=23, minute=59, second=59, microsecond=0)
 
     header = {'Authorization': 'Bearer ' + token}
@@ -92,7 +92,7 @@ async def get_assignment(session, url, token):
 
         return course_assignments
 
-async def get_week_assignments(token,courses=None):
+async def getWeekAssignments(token,courses=None):
 
     start_time = time.time()
     async with aiohttp.ClientSession() as session:
@@ -100,7 +100,7 @@ async def get_week_assignments(token,courses=None):
         tasks = []
         for course in courses.values():
             url = f"https://canvas.instructure.com/api/v1/courses/{course['id']}/assignments"
-            tasks.append(asyncio.ensure_future(get_assignment(session, url, token)))
+            tasks.append(asyncio.ensure_future(getAssignment(session, url, token)))
 
         assignments = await asyncio.gather(*tasks)
 
@@ -110,14 +110,14 @@ async def get_week_assignments(token,courses=None):
 
 
 # get current grades of student
-async def get_grades(courses, token):
+async def getGrades(courses, token):
     header = {'Authorization': 'Bearer ' + token}
     data = {
         "per_page": 15,
         "state[]": "active"
     }
     grades = []
-    userID = get_user_id(token)
+    userID = getUserID(token)
     r = requests.get(
         f"https://canvas.instructure.com/api//v1/users/{userID}/enrollments", headers=header, data=data)
     r = r.json()

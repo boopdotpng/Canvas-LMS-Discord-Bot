@@ -2,3 +2,5 @@ bot-env/
 .env
 discord.log
 db.json
+env/
+test/

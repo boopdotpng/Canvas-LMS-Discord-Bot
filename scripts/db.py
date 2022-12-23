@@ -1,60 +1,59 @@
-from tinydb import TinyDB, Query
-from tinydb.table import Document
+from dotenv import load_dotenv
+import os
 import scripts.canvas_api as canvas_api
-from tinydb.queries import where
-
-db = TinyDB('db.json')
-user_table = db.table('users')
-server_table = db.table('servers')
+from pymongo import MongoClient
+from datetime import datetime, date, time, timedelta
 
 
-async def new_user(user_id: int, token: str):
-    # fetch courses belonging to user
+load_dotenv("../.env") #! load environment variable from root
+
+conn = os.getenv("CONN")
+
+client = MongoClient(conn)
+
+maindb = client["canvas-users"]
+user_collection = maindb["users"] #! each document is a user
+
+def isUser(userID):
+    user = user_collection.find_one({"_id": userID})
+
+    return True if user else False
+
+async def newUser(userID, token, notify=False, notify_days=0):
+    # check if user already exists
+    if isUser(userID):
+        # update token
+        user_collection.update_one({"_id": userID}, {"$set": {"token": token}})
+        return
+
     courses = await canvas_api.getCourses(token)
 
-    new_courses = {}
-    for course in courses:
-        new_courses[course] = {
-            "id": courses[course],
-            "notifications": False
-        }
+    user = {
+        "_id": userID,
+        "token": token,
+        "notify": notify,
+        "courses": courses,
+        "notify_days": notify_days,
+    }
 
-    user_table.insert(Document({'token': token,
-                                'courses': new_courses, 'notifications': False, 'days': 0}, doc_id=int(user_id)))
+    user_collection.insert_one(user)
 
+def updateNotify(userID, notify):
+    user_collection.update_one({"_id": userID}, {"$set": {"notify": notify}})
 
-def update_notifications(user_id: int, notifications: bool):
-    user_table.update(
-        Document({'notifications': notifications}, doc_id=user_id))
+def updateNotifyDays(userID, notify_days):
+    user_collection.update_one({"_id": userID}, {"$set": {"notify_days": notify_days}})
 
+def updateCourseSettings(userID, courses):
+    user_collection.update_one({"_id": userID}, {"$set": {"courses": courses}})
 
-def update_days(user_id: int, days: int):
-    user_table.update(Document({'days': days}, doc_id=user_id))
+def deleteAccount(userID):
+    user_collection.delete_one({"_id": userID})
 
+def getToken(userID):
+    user = user_collection.find_one({"_id": userID})
+    return user["token"]
 
-def update_token(user_id: int, token: str):
-    user_table.update(Document({'token': token}, doc_id=user_id))
-
-
-def update_courses(user_id: int, courses):
-    user_table.update(Document({'courses': courses}, doc_id=user_id))
-
-
-def get_token(user_id: int):
-    return user_table.get(doc_id=user_id)['token']
-
-
-def get_courses(user_id: int):
-    return user_table.get(doc_id=user_id)['courses']
-
-
-def is_user(user_id: int):
-    return user_table.get(doc_id=user_id) is not None
-
-
-def update_assignments(user_id: int, assignments):
-    user_table.update(Document({'week_assignments': assignments}, doc_id=user_id))
-
-
-def delete_user(user_id: int):
-    user_table.remove(doc_ids=[user_id])
+def getCourses(userID):
+    user = user_collection.find_one({"_id": userID})
+    return user["courses"]

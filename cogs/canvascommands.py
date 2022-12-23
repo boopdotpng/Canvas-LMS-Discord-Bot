@@ -7,23 +7,22 @@ class canvas_commands(commands.Cog):
     def __init__(self, bot_: discord.Bot):
         self.bot = bot_
 
-    @commands.slash_command( # shows assignments for the next week
+    #! show assignments for the week
+    @commands.slash_command(
         name="show_week",
         description="Show the current week of assignments",
         guild_ids=[1038598934265864222]
     )
     async def show_week(self, ctx):
-        userid = ctx.author.id.__int__() # check if user is in database
-        if not db.is_user(userid):
+        userid = ctx.author.id.__int__()
+        if not db.isUser(userid):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
-        # get courses
-        courses = db.get_courses(userid)
+        courses = db.getCourses(userid)
 
-        # get assignments
-        assignments = await canvas_api.get_week_assignments(db.get_token(userid), courses)
+        assignments = await canvas_api.getWeekAssignments(db.getToken(userid), courses)
 
-        # make embed for assignments
+        #! work in progress
         embed = discord.Embed(
             title="Assignments",
             description="Here are your assignments for the week:",
@@ -33,21 +32,22 @@ class canvas_commands(commands.Cog):
         # format & print assignments
         print(assignments)
 
-    @commands.slash_command( # shows current grades as in canvas
+    #! fetches user's grades
+    @commands.slash_command(
         name="get_grades",
         description="get your grades",
         guild_ids=[1038598934265864222]
     )
     async def get_grades(self, ctx):
         userid = ctx.author.id.__int__()
-        if not db.is_user(userid):
+        if not db.isUser(userid):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
-        # get courses/token
+        # get courses
         token = db.get_token(userid)
         courses = db.get_courses(userid)
         # get grades
-        grades = await canvas_api.get_grades(courses, token)
+        grades = await canvas_api.getGrades(courses, token)
 
         embed = discord.Embed(
             title="Grades",
