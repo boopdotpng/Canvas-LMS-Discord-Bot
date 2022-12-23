@@ -54,3 +54,5 @@ def deleteAccount(userID):
 def getToken(userID):
     user = user_collection.find_one({"_id": userID})
     return user["token"]
+def getDB():
+    return maindb
