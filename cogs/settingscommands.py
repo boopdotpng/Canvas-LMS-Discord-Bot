@@ -3,18 +3,21 @@ from discord.ext import commands
 from discord.commands import SlashCommandGroup
 from scripts import canvas_api, db
 
-
+#! update notification settings
 class updateSettingsView(discord.ui.View):
+    #! notis on button
     @discord.ui.button(label="On", style=discord.ButtonStyle.primary, emoji="🔔")
     async def first_button_callback(self, button, interaction):
         await interaction.response.send_message("Notifications On.", ephemeral=True)
         db.updateNotify(interaction.user.id, True)
 
+    #! notis off button
     @discord.ui.button(label="Off", style=discord.ButtonStyle.secondary, emoji="🔕")
     async def second_button_callback(self, button, interaction):
         await interaction.response.send_message("Notifications Off.", ephemeral=True)
         db.updateNotify(interaction.user.id, False)
 
+    #! callback for course select menu | set later on
     async def course_select_callback(self, interaction):
         selected = interaction.data["values"]
         courses = db.getCourses(interaction.user.id)
@@ -25,7 +28,8 @@ class updateSettingsView(discord.ui.View):
 
         return await interaction.response.send_message("Selected " + ', '.join(selected) + ".", ephemeral=True)
 
-    @discord.ui.select(  # the decorator that lets you specify the properties of the select menu
+    #! select menu for days of week
+    @discord.ui.select(
         # the placeholder text that will be displayed if nothing is selected
         placeholder="Select days",
         min_values=1,  # the minimum number of values that must be selected by the users
@@ -60,9 +64,10 @@ class updateSettingsView(discord.ui.View):
             )
         ]
     )
-    # the function called when the user is done selecting options
+
+    #! days of week menu callback
     async def days_callback(self, select, interaction):
-        # calculate bitfield for days
+        #! bitfield conversion
         days = "0000000"
         for each in select.values:
             if each == "Sunday":
@@ -87,14 +92,16 @@ class updateSettingsView(discord.ui.View):
         # convert days to binary
         db.updateNotifyDays(interaction.user.id, int(days, 2))
 
-
+#! text input field for user to enter token
 class tokenModal(discord.ui.Modal):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
+        #? modal defined here
         self.add_item(discord.ui.InputText(label="Enter token here: ",
                       style=discord.InputTextStyle.long, max_length=72, min_length=1, placeholder="Token"))
 
+    #! callback for token input | token verification is done here
     async def callback(self, interaction: discord.Interaction):
         token = self.children[0].value
         isValid = canvas_api.verifyToken(token)
@@ -105,49 +112,50 @@ class tokenModal(discord.ui.Modal):
         else:
             await interaction.response.send_message("Invalid token", ephemeral=True)
 
-# Create a class called MyView that subclasses discord.ui.View
-class initialTokenView(discord.ui.View):
+#! button to open token input modal
+class tokenButton(discord.ui.View):
 
     @discord.ui.button(label="Enter Token", style=discord.ButtonStyle.primary, emoji="📝")
     async def button_callback(self, button, interaction):
         await interaction.response.send_modal(tokenModal(title="Token Input"))
 
+#! delete account button view
 class deleteButtonView(discord.ui.View):
     @discord.ui.button(label="Delete", style=discord.ButtonStyle.danger, emoji="🗑️")
     async def button_callback(self, button, interaction):
         await interaction.response.send_message("Account deleted.", ephemeral=True)
         db.deleteAccount(interaction.user.id)
 
-#####! the commands start here !#####
-
+#####! the command definitions start here !#####
 
 class setup_commands(commands.Cog):
     def __init__(self, bot_: discord.Bot):
         self.bot = bot_
 
-    @commands.slash_command(  # initial bot setup
+    #! entry point for initial users
+    @commands.slash_command(
         name="set_token",
-        description="set/update your canvas token",
+        description="set or update your canvas token",
         guild_ids=[1038598934265864222]
     )
     async def initial_setup(self, ctx):
         userid = ctx.author.id.__int__()
-        ctx.respond("Please enter your token below.", view=initialTokenView())
+        await ctx.respond("Please enter your token below.", view=tokenButton())
 
-    ######################################################################
-
+    #! adjust notification settings
     @commands.slash_command(
         name="notify_settings",
-        description="adjust notification settings",
+        description="customize your notification settings",
         guild_ids=[1038598934265864222]
     )
     async def update_notifications(self, ctx):
-        if not db.is_user(ctx.author.id):
+        if not db.isUser(ctx.author.id):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
         token = db.getToken(ctx.author.id)
         courses = db.getCourses(ctx.author.id)
         view = updateSettingsView()
+        #! add course select menu to notification settings class
         view.add_item(discord.ui.Select(
             placeholder="Select courses",
             min_values=1,
@@ -157,11 +165,11 @@ class setup_commands(commands.Cog):
         )
         )
 
-        view.children[3].callback = view.course_select_callback
+        view.children[3].callback = view.course_select_callback #! set callback to function defined in class
 
         await ctx.respond("Adjust notification preferences below.\n", view=view, ephemeral=True)
 
-
+    #! delete account
     @commands.slash_command(
         name="delete_account",
         description="delete your account",

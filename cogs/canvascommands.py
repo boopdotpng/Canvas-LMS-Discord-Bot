@@ -8,6 +8,7 @@ class canvas_commands(commands.Cog):
     def __init__(self, bot_: discord.Bot):
         self.bot = bot_
 
+    #! show assignments for the week
     @commands.slash_command(
         name="show_week",
         description="Show the current week of assignments",
@@ -18,13 +19,11 @@ class canvas_commands(commands.Cog):
         if not db.isUser(userid):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
-        # get courses
         courses = db.getCourses(userid)
 
-        # get assignments
-        assignments = await canvas_api.getWeekAssignments(db.get_token(userid), courses)
+        assignments = await canvas_api.getWeekAssignments(db.getToken(userid), courses)
 
-        # make embed for assignments
+        #! work in progress
         embed = discord.Embed(
             title="Assignments",
             description="Here are your assignments for the week:",
@@ -33,9 +32,7 @@ class canvas_commands(commands.Cog):
 
         print(assignments)
 
-
-
-
+    #! fetches user's grades
     @commands.slash_command(
         name="get_grades",
         description="get your grades",

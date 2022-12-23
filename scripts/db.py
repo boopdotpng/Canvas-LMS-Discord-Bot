@@ -1,19 +1,18 @@
 from dotenv import load_dotenv
 import os
-#import scripts.canvas_api as canvas_api
-import canvas_api
+import scripts.canvas_api as canvas_api
 from pymongo import MongoClient
 from datetime import datetime, date, time, timedelta
 
 
-load_dotenv("../.env")
+load_dotenv("../.env") #! load environment variable from root
 
 conn = os.getenv("CONN")
 
 client = MongoClient(conn)
 
 maindb = client["canvas-users"]
-user_collection = maindb["users"]
+user_collection = maindb["users"] #! each document is a user
 
 def isUser(userID):
     user = user_collection.find_one({"_id": userID})
@@ -54,3 +53,7 @@ def deleteAccount(userID):
 def getToken(userID):
     user = user_collection.find_one({"_id": userID})
     return user["token"]
+
+def getCourses(userID):
+    user = user_collection.find_one({"_id": userID})
+    return user["courses"]
