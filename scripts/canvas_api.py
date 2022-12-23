@@ -100,7 +100,7 @@ async def getWeekAssignments(token,courses=None):
         tasks = []
         for course in courses.values():
             url = f"https://canvas.instructure.com/api/v1/courses/{course['id']}/assignments"
-            tasks.append(asyncio.ensure_future(get_assignment(session, url, token)))
+            tasks.append(asyncio.ensure_future(getAssignment(session, url, token)))
 
         assignments = await asyncio.gather(*tasks)
 
@@ -117,7 +117,7 @@ async def getGrades(courses, token):
         "state[]": "active"
     }
     grades = []
-    userID = get_user_id(token)
+    userID = getUserID(token)
     r = requests.get(
         f"https://canvas.instructure.com/api//v1/users/{userID}/enrollments", headers=header, data=data)
     r = r.json()
