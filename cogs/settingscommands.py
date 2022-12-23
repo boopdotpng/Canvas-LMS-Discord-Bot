@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 from discord.commands import SlashCommandGroup
 from scripts import canvas_api, db
+from discord.commands import Option
+from datetime import datetime
 
 #! update notification settings
 class updateSettingsView(discord.ui.View):
@@ -132,13 +134,20 @@ class setup_commands(commands.Cog):
     def __init__(self, bot_: discord.Bot):
         self.bot = bot_
 
+    def validateTime(self, time: str):
+        try:
+            time = datetime.strptime(time, "%I:%M %p")
+            return time
+        except ValueError:
+            return False
+
     #! entry point for initial users
     @commands.slash_command(
         name="set_token",
         description="set or update your canvas token",
         guild_ids=[1038598934265864222]
     )
-    async def initial_setup(self, ctx):
+    async def setToken(self, ctx):
         userid = ctx.author.id.__int__()
         await ctx.respond("Please enter your token below.", view=tokenButton())
 
@@ -148,26 +157,36 @@ class setup_commands(commands.Cog):
         description="customize your notification settings",
         guild_ids=[1038598934265864222]
     )
-    async def update_notifications(self, ctx):
+    async def updateNotify(self, ctx, time: Option(str, "Time", required=False)):
         if not db.isUser(ctx.author.id):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
         token = db.getToken(ctx.author.id)
         courses = db.getCourses(ctx.author.id)
         view = updateSettingsView()
-        #! add course select menu to notification settings class
-        view.add_item(discord.ui.Select(
-            placeholder="Select courses",
-            min_values=1,
-            max_values=len(courses),
-            options=[discord.SelectOption(label=course)
-                     for course in courses.keys()],
-        )
-        )
 
-        view.children[3].callback = view.course_select_callback #! set callback to function defined in class
+        #! add course select menu to notification settings class
+        # view.add_item(discord.ui.Select(
+        #     placeholder="Select courses",
+        #     min_values=1,
+        #     max_values=len(courses),
+        #     options=[discord.SelectOption(label=course)
+        #              for course in courses.keys()],
+        # )
+        # )
+
+        # view.children[3].callback = view.course_select_callback #! set callback to function defined in class
 
         await ctx.respond("Adjust notification preferences below.\n", view=view, ephemeral=True)
+
+        time_result = self.validateTime(time)
+
+        if time_result == False:
+            await ctx.respond("Invalid time format. HH:MM pm/am", ephemeral=True)
+        else:
+            time_result = time_result.strftime("%I:%M %p")
+            db.updateNotifyTime(str(ctx.author.id), time)
+            await ctx.respond(f"Notifications will be sent at {time_result}.", ephemeral=True)
 
     #! delete account
     @commands.slash_command(
@@ -175,12 +194,11 @@ class setup_commands(commands.Cog):
         description="delete your account",
         guild_ids=[1038598934265864222]
     )
-    async def delete_account(self, ctx):
+    async def deleteAccount(self, ctx):
         if not db.isUser(ctx.author.id):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
         await ctx.respond("Sorry to see you go! Press the button to confirm.", view=deleteButtonView(), ephemeral=True)
-
 
 def setup(bot):
     bot.add_cog(setup_commands(bot))
