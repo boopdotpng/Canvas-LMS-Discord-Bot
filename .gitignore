@@ -4,3 +4,5 @@ discord.log
 db.json
 env/
 test/
+__pycache__/
+ *.pyc
