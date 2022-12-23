@@ -28,20 +28,20 @@ class Scheduler(commands.Cog):
         
         logger.info('cogs.Scheduler: Cog intialized')
     
-    def sendReminder(self, userId: int):    
+    def sendDigest(self, userId: int):    
         pass
     
-    def addReminder(self, userId: int, weekday: int, time: time):
+    def addDigestJob(self, userId: int, weekday: int, time: time):
         user = self.bot.get_user(userId)
         
-        #Generate a datetime object for the next time the reminder should be sent
+        #Generate a datetime object for the next time the Digest should be sent
         nextRunTime = datetime.combine(date.today() + timedelta(days=(weekday - date.today().weekday()) % 7), time)
         
         
         job = Job(
             scheduler=self.scheduler,
-            name = f'{user.name}: {weekday} at {time.__repr__()}',
-            func = self.sendReminder,
+            name = f'Digest for: {user.name} on {weekday} at {time.__repr__()}',
+            func = self.sendDigest,
             args = [userId],
             trigger = CronTrigger(day_of_week=weekday, hour=time.hour, minute=time.minute, timezone='America/New_York'),
             executor = 'default',
@@ -51,11 +51,11 @@ class Scheduler(commands.Cog):
         )
         
         self.jobstore.add_job(job)
-        logger.info(f'cogs.Scheduler: Added reminder for {user.name} at {time} on {weekday}')
+        logger.info(f'cogs.Scheduler: Added Digest for {user.name} at {time} on {weekday}')
         
-    def removeReminder(self, userId: int, weekday: int, time: time):
+    def removeDigestJob(self, userId: int, weekday: int, time: time):
         user = self.bot.get_user(userId)
-        job: Job = self.jobstore.find_jobs(name=f'{user.name}: {weekday} at {time.__repr__()}')
+        job: Job = self.jobstore.find_jobs(name=f'Digest for: {user.name} on {weekday} at {time.__repr__()}')
         self.jobstore.remove_job(job.id)
-        logger.info(f'cogs.Scheduler: Removed reminder for {user.name} at {time} on {weekday}')
+        logger.info(f'cogs.Scheduler: Removed Digest for {user.name} at {time} on {weekday}')
         
