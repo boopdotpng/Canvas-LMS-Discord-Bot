@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord.commands import SlashCommandGroup
 from scripts import canvas_api, db
 
 
@@ -30,6 +29,7 @@ class canvas_commands(commands.Cog):
             color=discord.Colour.brand_red()
             )
 
+        # format & print assignments
         print(assignments)
 
     #! fetches user's grades
@@ -44,8 +44,8 @@ class canvas_commands(commands.Cog):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
         # get courses
-        token = db.getToken(userid)
-        courses = db.getCourses(userid)
+        token = db.get_token(userid)
+        courses = db.get_courses(userid)
         # get grades
         grades = await canvas_api.getGrades(courses, token)
 
