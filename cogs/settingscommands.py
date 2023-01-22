@@ -2,8 +2,7 @@ import discord
 from discord.ext import commands
 from discord.commands import SlashCommandGroup
 from scripts import canvas_api, db
-from discord.commands import Option
-from datetime import datetime
+from discord.commands import option
 
 #! update notification settings
 class updateSettingsView(discord.ui.View):
@@ -22,13 +21,21 @@ class updateSettingsView(discord.ui.View):
     #! callback for course select menu | set later on
     async def course_select_callback(self, interaction):
         selected = interaction.data["values"]
-        courses = db.getCourses(interaction.user.id)
+
+        ids = []
+
+        courses = db.getCourses(str(interaction.user.id))
+
         for course in selected:
-            courses[course]["notifications"] = True
+            try:
+                ids.append(courses[course])
+            except:
+                continue
 
-        db.updateCourseSettings(interaction.user.id, courses)
 
-        return await interaction.response.send_message("Selected " + ', '.join(selected) + ".", ephemeral=True)
+        db.updateCourseSettings(str(interaction.user.id), ids)
+
+        await interaction.response.send_message("Selected:\n" + '\n'.join(selected), ephemeral=True)
 
     #! select menu for days of week
     @discord.ui.select(
@@ -101,7 +108,7 @@ class tokenModal(discord.ui.Modal):
 
         #? modal defined here
         self.add_item(discord.ui.InputText(label="Enter token here: ",
-                      style=discord.InputTextStyle.long, max_length=72, min_length=1, placeholder="Token"))
+        style=discord.InputTextStyle.long, max_length=72, min_length=1, placeholder="Token"))
 
     #! callback for token input | token verification is done here
     async def callback(self, interaction: discord.Interaction):
@@ -135,11 +142,13 @@ class setup_commands(commands.Cog):
         self.bot = bot_
 
     def validateTime(self, time: str):
+        if time == "":
+            return False
         try:
             time = datetime.strptime(time, "%I:%M %p")
             return time
         except ValueError:
-            return False
+            return ValueError
 
     #! entry point for initial users
     @commands.slash_command(
@@ -157,7 +166,13 @@ class setup_commands(commands.Cog):
         description="customize your notification settings",
         guild_ids=[1038598934265864222]
     )
-    async def updateNotify(self, ctx, time: Option(str, "Time", required=False)):
+    @option(
+        "time",
+        description="Enter a time to be notified",
+        required=False,
+        default=''
+    )
+    async def updateNotify(self, ctx, time: str):
         if not db.isUser(ctx.author.id):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
@@ -166,22 +181,23 @@ class setup_commands(commands.Cog):
         view = updateSettingsView()
 
         #! add course select menu to notification settings class
-        # view.add_item(discord.ui.Select(
-        #     placeholder="Select courses",
-        #     min_values=1,
-        #     max_values=len(courses),
-        #     options=[discord.SelectOption(label=course)
-        #              for course in courses.keys()],
-        # )
-        # )
+        view.add_item(discord.ui.Select(
+            placeholder="Select courses",
+            min_values=1,
+            max_values=len(courses),
+            options=[discord.SelectOption(label=course)
+            for course in courses.keys()],
+        )
+        )
 
-        # view.children[3].callback = view.course_select_callback #! set callback to function defined in class
+        view.children[3].callback = view.course_select_callback #! set callback to function defined in class
 
         await ctx.respond("Adjust notification preferences below.\n", view=view, ephemeral=True)
 
         time_result = self.validateTime(time)
-
-        if time_result == False:
+        if not time:
+            return
+        elif time_result == ValueError:
             await ctx.respond("Invalid time format. HH:MM pm/am", ephemeral=True)
         else:
             time_result = time_result.strftime("%I:%M %p")

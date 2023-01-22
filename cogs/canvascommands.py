@@ -44,8 +44,8 @@ class canvas_commands(commands.Cog):
             return await ctx.respond("You do not have an account!", ephemeral=True)
 
         # get courses
-        token = db.get_token(userid)
-        courses = db.get_courses(userid)
+        token = db.getToken(userid)
+        courses = db.getCourses(userid)
         # get grades
         grades = await canvas_api.getGrades(courses, token)
 

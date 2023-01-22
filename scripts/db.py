@@ -20,7 +20,7 @@ def isUser(userID):
 
     return True if user else False
 
-async def newUser(userID, token, notify=False, notify_days=0, notify_time=datetime.strptime("5:00 pm", "%I:%M %p")):
+async def newUser(userID, token, notify=False, notify_days=0, notify_time: datetime=datetime.strptime("5:00 pm", "%I:%M %p"), selected_courses: list=[]):
     userID = str(userID)
     # check if user already exists
     if isUser(userID):
@@ -36,7 +36,8 @@ async def newUser(userID, token, notify=False, notify_days=0, notify_time=dateti
         "notify": notify,
         "courses": courses,
         "notify_days": notify_days,
-        "notify_time": notify_time
+        "notify_time": notify_time,
+        "selected_courses": selected_courses
     }
 
     user_collection.insert_one(user)
@@ -49,9 +50,9 @@ def updateNotifyDays(userID, notify_days):
     userID = str(userID)
     user_collection.update_one({"_id": userID}, {"$set": {"notify_days": notify_days}})
 
-def updateCourseSettings(userID, courses):
+def updateCourseSettings(userID, selected):
     userID = str(userID)
-    user_collection.update_one({"_id": userID}, {"$set": {"courses": courses}})
+    user_collection.update_one({"_id": userID}, {"$set": {"selected_courses": selected}})
 
 def deleteAccount(userID):
     userID = str(userID)
